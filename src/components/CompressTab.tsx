@@ -5,15 +5,25 @@
  * pipeline, then shows the encoding table, stats, header breakdown,
  * and a download button for the resulting .huff file.
  *
+ * Accepts an optional onStatusChange callback so App.tsx can lift the
+ * compression status for the Algorithm Steps panel.
+ *
  * Part of: COM336 Project 2 — Huffman Coding
  */
 
+import { useEffect } from 'react';
 import { useCompressor } from '../hooks/useCompressor';
 import { FilePicker } from './FilePicker';
 import { StatsPanel } from './StatsPanel';
 import { EncodingTable } from './EncodingTable';
 import { HeaderDisplay } from './HeaderDisplay';
 import { RawHeaderViewer } from './RawHeaderViewer';
+import type { ProcessStatus } from '../types/HuffmanTypes';
+
+interface CompressTabProps {
+  /** Called whenever the compressor state changes — used by App.tsx to drive the AlgorithmSteps panel. */
+  onStatusChange?: (status: ProcessStatus) => void;
+}
 
 /**
  * downloadFile
@@ -23,6 +33,7 @@ import { RawHeaderViewer } from './RawHeaderViewer';
  *
  * @param data     - file bytes to download
  * @param fileName - the suggested filename for the downloaded file
+ * Time complexity: O(n) — Blob creation is proportional to file size
  */
 function downloadFile(data: Uint8Array, fileName: string): void {
   // new Uint8Array(data) copies bytes into a fresh ArrayBuffer (not SharedArrayBuffer),
@@ -44,9 +55,17 @@ function downloadFile(data: Uint8Array, fileName: string): void {
  *   processing → spinner
  *   done      → results (EncodingTable + StatsPanel + HeaderDisplay + download button)
  *   error     → error message + reset button
+ *
+ * @param onStatusChange - optional callback invoked on every status transition
+ * Time complexity: driven by the compression pipeline — O(n log n)
  */
-export function CompressTab() {
+export function CompressTab({ onStatusChange }: CompressTabProps) {
   const { state, run, reset } = useCompressor();
+
+  // Propagate status changes to the parent (App.tsx) for the Algorithm Steps panel
+  useEffect(() => {
+    onStatusChange?.(state.status);
+  }, [state.status, onStatusChange]);
 
   return (
     <div className="tab-content">
@@ -94,15 +113,18 @@ export function CompressTab() {
             </button>
           </div>
 
-          {/* Statistics readout */}
+          {/* Statistics readout — now includes leafCount, treeSerializedBits, extension */}
           <StatsPanel
             originalSize={state.result.originalSize}
             outputSize={state.result.compressedSize}
             ratio={state.result.compressionRatio}
             mode="compress"
+            leafCount={state.result.leafCount}
+            treeSerializedBits={state.result.treeSerializedBits}
+            extension={state.result.extension}
           />
 
-          {/* Header field breakdown */}
+          {/* Header field breakdown — protocol diagram table */}
           <HeaderDisplay
             extension={state.result.extension}
             originalFileSize={state.result.originalSize}
@@ -113,8 +135,12 @@ export function CompressTab() {
           {/* Byte-level hex + binary dump of the actual .huff header */}
           <RawHeaderViewer buffer={state.result.buffer} />
 
-          {/* Huffman code table — the money shot */}
-          <EncodingTable codeTable={state.result.codeTable} />
+          {/* Huffman code table — sorted by frequency, with summary row */}
+          <EncodingTable
+            codeTable={state.result.codeTable}
+            freqTable={state.result.freqTable}
+            originalSize={state.result.originalSize}
+          />
 
           {/* Reset / compress another file */}
           <button className="btn-reset" onClick={reset} style={{ marginTop: '1.5rem' }}>

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node_modules\\\\.bin\\\\tsc -b --noEmit)",
+      "Bash(node_modules/.bin/tsc -b)",
+      "Bash(node_modules/.bin/vite build *)"
+    ]
+  }
+}

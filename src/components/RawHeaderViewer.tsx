@@ -162,9 +162,7 @@ export function RawHeaderViewer({ buffer }: RawHeaderViewerProps) {
       <div className="rhv-header-bar">
         <span className="panel-label">RAW HEADER DATA</span>
         <span className="rhv-meta">
-          {buffer.length.toLocaleString()} bytes total ·{' '}
-          data starts at{' '}
-          <span className="rhv-mono">0x{dataStartByte.toString(16).toUpperCase().padStart(4, '0')}</span>
+          {buffer.length.toLocaleString()} bytes total
         </span>
       </div>
 

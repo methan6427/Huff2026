@@ -1,9 +1,9 @@
 /**
  * HeaderDisplay.tsx
  *
- * Visualises the .huff file header fields in a colour-coded breakdown.
- * Each field is shown with its name, value, and bit-width so the instructor
- * can see exactly what is stored in the header.
+ * Visualises the .huff file header as a protocol table.
+ * Shows all 5 header fields with their number, name, bit-width,
+ * actual value, and a short description.
  *
  * Part of: COM336 Project 2 — Huffman Coding
  */
@@ -15,52 +15,55 @@ interface HeaderDisplayProps {
   leafCount?: number;
 }
 
+// One accent colour per field for quick visual scanning
+const FIELD_COLORS = [
+  'var(--accent-primary)',  // [1] extension length
+  '#7EB8FF',                // [2] extension chars
+  'var(--accent-warning)',  // [3] original file size
+  '#FF7EB8',                // [4] tree bit length
+  'var(--accent-success)',  // [5] serialised tree
+] as const;
+
 /**
- * HeaderField
+ * FieldRow
  *
- * Renders a single header field as a labelled row with a coloured indicator.
+ * One row in the protocol table: field number, name, bit-width, value, description.
  *
- * @param label   - field name
- * @param value   - human-readable value
- * @param bits    - how many bits this field occupies
- * @param accent  - CSS colour for the left-border accent
+ * @param num    - e.g. "[3]"
+ * @param name   - field name
+ * @param bits   - bit-width string
+ * @param value  - actual value from the file
+ * @param why    - short description
+ * @param accent - left-border and bit-width colour
+ * Time complexity: O(1)
  */
-function HeaderField({
-  label,
-  value,
-  bits,
-  accent,
+function FieldRow({
+  num, name, bits, value, why, accent,
 }: {
-  label: string;
-  value: string;
-  bits: string;
-  accent: string;
+  num: string; name: string; bits: string;
+  value: string; why: string; accent: string;
 }) {
   return (
-    <div className="header-field" style={{ borderLeftColor: accent }}>
-      <div className="header-field-top">
-        <span className="header-field-label">{label}</span>
-        <span className="header-field-bits" style={{ color: accent }}>{bits}</span>
-      </div>
-      <div className="header-field-value">{value}</div>
-    </div>
+    <tr className="hd-proto-row" style={{ borderLeftColor: accent }}>
+      <td className="hd-proto-num"  style={{ color: accent }}>{num}</td>
+      <td className="hd-proto-name">{name}</td>
+      <td className="hd-proto-bits" style={{ color: accent }}>{bits}</td>
+      <td className="hd-proto-value">{value}</td>
+      <td className="hd-proto-why">{why}</td>
+    </tr>
   );
 }
 
 /**
  * HeaderDisplay
  *
- * Shows all four header fields defined in the .huff format:
- *   [1] Extension length (8 bits)
- *   [2] Extension characters (8 × length bits)
- *   [3] Original file size (32 bits)
- *   [4] Tree bit length (32 bits)
- *   [5] Serialised tree (N bits)
+ * Protocol table for the .huff file header showing all 5 fields.
  *
- * @param extension          - the original file extension stored in the header
- * @param originalFileSize   - original size in bytes (stored in header field 3)
- * @param treeSerializedBits - bit count of the serialised tree (header field 4)
- * @param leafCount          - number of unique byte values (for context)
+ * @param extension          - original file extension stored in the header
+ * @param originalFileSize   - original file size in bytes (header field [3])
+ * @param treeSerializedBits - bit count of the serialised Huffman tree (header field [4])
+ * @param leafCount          - number of unique bytes in the file (optional, for display)
+ * Time complexity: O(1)
  */
 export function HeaderDisplay({
   extension,
@@ -69,76 +72,78 @@ export function HeaderDisplay({
   leafCount,
 }: HeaderDisplayProps) {
   const extBits = extension.length * 8;
-
-  // Total header overhead in bits before the encoded data:
-  //   8 (ext len) + extBits (ext chars) + 32 (orig size) + 32 (tree len) + treeSerializedBits
   const headerTotalBits = 8 + extBits + 32 + 32 + treeSerializedBits;
   const headerBytes = Math.ceil(headerTotalBits / 8);
+
+  const extValueStr = extension.length > 0
+    ? `"${extension.toUpperCase()}" (${extension.length} char${extension.length !== 1 ? 's' : ''})`
+    : '(no extension)';
+
+  const treeValueStr = leafCount !== undefined
+    ? `${treeSerializedBits} bits · ${leafCount} leaves`
+    : `${treeSerializedBits} bits`;
 
   return (
     <div className="header-display-container">
       <div className="header-display-title">
-        <span className="panel-label">HEADER STRUCTURE</span>
-        <span className="header-display-overhead">
-          {headerBytes} bytes overhead
-        </span>
+        <span className="panel-label">Header Structure</span>
+        <span className="header-display-overhead">{headerBytes} bytes overhead</span>
       </div>
 
-      {/* Each field gets a unique accent colour for quick visual scanning */}
-      <HeaderField
-        label="[1] EXTENSION LENGTH"
-        value={`${extension.length} char${extension.length !== 1 ? 's' : ''}`}
-        bits="8 bits"
-        accent="var(--accent-primary)"
-      />
-
-      <HeaderField
-        label="[2] EXTENSION"
-        value={extension.length > 0 ? `"${extension.toUpperCase()}"` : '(none)'}
-        bits={`${extBits} bits`}
-        accent="#7EB8FF"
-      />
-
-      <HeaderField
-        label="[3] ORIGINAL FILE SIZE"
-        value={`${originalFileSize.toLocaleString()} bytes`}
-        bits="32 bits"
-        accent="var(--accent-warning)"
-      />
-
-      <HeaderField
-        label="[4] TREE BIT LENGTH"
-        value={`${treeSerializedBits} bits`}
-        bits="32 bits"
-        accent="#FF7EB8"
-      />
-
-      <HeaderField
-        label="[5] SERIALISED TREE"
-        value={`PostOrder · ${treeSerializedBits} bits${leafCount !== undefined ? ` · ${leafCount} leaves` : ''}`}
-        bits={`${treeSerializedBits} bits`}
-        accent="var(--accent-success)"
-      />
-
-      {/* Schema diagram — mirrors the lecture whiteboard exactly */}
-      <div className="header-diagram">
-        <div className="header-diagram-title">BINARY LAYOUT</div>
-        <div className="header-diagram-segments">
-          <div className="hd-seg" style={{ background: 'var(--accent-primary)', flex: 1, minWidth: 8, maxWidth: 24 }} title="Ext length (8 bits)" />
-          <div className="hd-seg" style={{ background: '#7EB8FF', flex: Math.max(extBits, 1), minWidth: 8, maxWidth: 48 }} title={`Extension (${extBits} bits)`} />
-          <div className="hd-seg" style={{ background: 'var(--accent-warning)', flex: 32, minWidth: 24, maxWidth: 64 }} title="Orig size (32 bits)" />
-          <div className="hd-seg" style={{ background: '#FF7EB8', flex: 32, minWidth: 24, maxWidth: 64 }} title="Tree len (32 bits)" />
-          <div className="hd-seg" style={{ background: 'var(--accent-success)', flex: Math.max(treeSerializedBits / 8, 8), minWidth: 24, maxWidth: 80 }} title={`Tree (${treeSerializedBits} bits)`} />
-          <div className="hd-seg hd-seg-data" title="Encoded data" />
-        </div>
-        <div className="header-diagram-labels">
-          <span style={{ color: 'var(--accent-primary)' }}>ext·len</span>
-          <span style={{ color: '#7EB8FF' }}>ext</span>
-          <span style={{ color: 'var(--accent-warning)' }}>orig·size</span>
-          <span style={{ color: '#FF7EB8' }}>tree·len</span>
-          <span style={{ color: 'var(--accent-success)' }}>tree</span>
-          <span style={{ color: 'var(--text-secondary)' }}>data…</span>
-        </div>
+      <div className="hd-proto-wrapper">
+        <table className="hd-proto-table">
+          <thead>
+            <tr className="hd-proto-thead">
+              <th className="hd-proto-th hd-th-num">#</th>
+              <th className="hd-proto-th hd-th-name">Field</th>
+              <th className="hd-proto-th hd-th-bits">Bits</th>
+              <th className="hd-proto-th hd-th-value">Value</th>
+              <th className="hd-proto-th hd-th-why">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <FieldRow
+              num="[1]"
+              name="Extension length"
+              bits="8"
+              value={`${extension.length}`}
+              why="Number of ASCII bytes that follow in field [2]."
+              accent={FIELD_COLORS[0]}
+            />
+            <FieldRow
+              num="[2]"
+              name="Extension chars"
+              bits={`${extBits}`}
+              value={extValueStr}
+              why="Original file extension, used to name the decoded output file."
+              accent={FIELD_COLORS[1]}
+            />
+            <FieldRow
+              num="[3]"
+              name="Original file size"
+              bits="32"
+              value={`${originalFileSize.toLocaleString()} bytes`}
+              why="Stored so the decoder knows exactly how many bytes to output and stops before reading padding zeros."
+              accent={FIELD_COLORS[2]}
+            />
+            <FieldRow
+              num="[4]"
+              name="Tree bit length"
+              bits="32"
+              value={`${treeSerializedBits} bits`}
+              why="Number of bits the serialised tree occupies; decoder reads exactly this many bits for field [5]."
+              accent={FIELD_COLORS[3]}
+            />
+            <FieldRow
+              num="[5]"
+              name="Serialised tree"
+              bits={`${treeSerializedBits}`}
+              value={treeValueStr}
+              why="PostOrder traversal (Left→Right→Root). Leaf = 1 + 8-bit char. Internal node = 0. Rebuilt in decoder using an explicit stack."
+              accent={FIELD_COLORS[4]}
+            />
+          </tbody>
+        </table>
       </div>
     </div>
   );

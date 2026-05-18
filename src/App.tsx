@@ -29,40 +29,11 @@ function MainLayout() {
       {/* ── Header ────────────────────────────────────────────────────── */}
       <header className="app-header">
         <div className="app-header-inner">
-          <div className="app-logo">
-            {/* Geometric SVG mark that resembles a Huffman tree branch */}
-            <svg className="logo-mark" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="8"  r="3" fill="var(--accent-primary)" />
-              <circle cx="10" cy="24" r="3" fill="var(--accent-primary)" opacity="0.7" />
-              <circle cx="30" cy="24" r="3" fill="var(--accent-primary)" opacity="0.7" />
-              <circle cx="5"  cy="36" r="3" fill="var(--accent-primary)" opacity="0.4" />
-              <circle cx="15" cy="36" r="3" fill="var(--accent-primary)" opacity="0.4" />
-              <circle cx="25" cy="36" r="3" fill="var(--accent-primary)" opacity="0.4" />
-              <circle cx="35" cy="36" r="3" fill="var(--accent-primary)" opacity="0.4" />
-              <line x1="20" y1="8"  x2="10" y2="24" stroke="var(--accent-primary)" strokeWidth="1" opacity="0.5"/>
-              <line x1="20" y1="8"  x2="30" y2="24" stroke="var(--accent-primary)" strokeWidth="1" opacity="0.5"/>
-              <line x1="10" y1="24" x2="5"  y2="36" stroke="var(--accent-primary)" strokeWidth="1" opacity="0.3"/>
-              <line x1="10" y1="24" x2="15" y2="36" stroke="var(--accent-primary)" strokeWidth="1" opacity="0.3"/>
-              <line x1="30" y1="24" x2="25" y2="36" stroke="var(--accent-primary)" strokeWidth="1" opacity="0.3"/>
-              <line x1="30" y1="24" x2="35" y2="36" stroke="var(--accent-primary)" strokeWidth="1" opacity="0.3"/>
-            </svg>
-            <div className="app-title-group">
-              <h1 className="app-title">HUFFMAN CODER</h1>
-              <p className="app-subtitle">COM336 · Design &amp; Analysis of Algorithms · Birzeit University</p>
-            </div>
+          <div className="app-title-group">
+            <h1 className="app-title">Huffman Coder</h1>
+            <p className="app-subtitle">COM336 · Design &amp; Analysis of Algorithms · Birzeit University</p>
           </div>
-
-          {/* Mini interface link */}
-          <a href="/mini" className="mini-link" title="Simplified drag-and-drop interface">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-              <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/>
-            </svg>
-            QUICK MODE
-          </a>
         </div>
-
-        {/* Thin accent line beneath the header */}
-        <div className="header-line" />
       </header>
 
       {/* ── Tab Bar ───────────────────────────────────────────────────── */}
@@ -71,30 +42,24 @@ function MainLayout() {
           className={`tab-btn ${activeTab === 'compress' ? 'active' : ''}`}
           onClick={() => setActiveTab('compress')}
         >
-          <span className="tab-indicator">[</span>
-          <span className="tab-icon">▼</span>
-          COMPRESS
-          <span className="tab-indicator">]</span>
+          Compress
         </button>
         <button
           className={`tab-btn ${activeTab === 'decompress' ? 'active' : ''}`}
           onClick={() => setActiveTab('decompress')}
         >
-          <span className="tab-indicator">[</span>
-          <span className="tab-icon">▲</span>
-          DECOMPRESS
-          <span className="tab-indicator">]</span>
+          Decompress
         </button>
       </nav>
 
       {/* ── Content Area ──────────────────────────────────────────────── */}
       <main className="app-main">
-        {activeTab === 'compress'   ? <CompressTab />   : <DecompressTab />}
+        {activeTab === 'compress' ? <CompressTab /> : <DecompressTab />}
       </main>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
       <footer className="app-footer">
-        <span>Huffman Coding · O(n log n) · PostOrder serialisation · Stack-based decode</span>
+        Huffman Coding · COM336 Project 2 · Birzeit University
       </footer>
     </div>
   );

@@ -5,14 +5,24 @@
  * (tree rebuild + bit decode), then shows the header info, stats, and a
  * download button for the recovered original file.
  *
+ * Accepts an optional onStatusChange callback so App.tsx can lift the
+ * decompression status for the Algorithm Steps panel.
+ *
  * Part of: COM336 Project 2 — Huffman Coding
  */
 
+import { useEffect } from 'react';
 import { useDecompressor } from '../hooks/useDecompressor';
 import { FilePicker } from './FilePicker';
 import { StatsPanel } from './StatsPanel';
 import { HeaderDisplay } from './HeaderDisplay';
 import { RawHeaderViewer } from './RawHeaderViewer';
+import type { ProcessStatus } from '../types/HuffmanTypes';
+
+interface DecompressTabProps {
+  /** Called whenever the decompressor state changes — used by App.tsx for the AlgorithmSteps panel. */
+  onStatusChange?: (status: ProcessStatus) => void;
+}
 
 /**
  * downloadFile
@@ -21,6 +31,7 @@ import { RawHeaderViewer } from './RawHeaderViewer';
  *
  * @param data     - file bytes
  * @param fileName - suggested download name
+ * Time complexity: O(n) — proportional to file size
  */
 function downloadFile(data: Uint8Array, fileName: string): void {
   // new Uint8Array(data) copies bytes into a fresh ArrayBuffer satisfying TS 5.6 Blob typing
@@ -41,9 +52,17 @@ function downloadFile(data: Uint8Array, fileName: string): void {
  *   processing → spinner
  *   done      → results (HeaderDisplay + StatsPanel + download button)
  *   error     → error message + reset button
+ *
+ * @param onStatusChange - optional callback invoked on every status transition
+ * Time complexity: driven by decompression — O(n) where n = original file size
  */
-export function DecompressTab() {
+export function DecompressTab({ onStatusChange }: DecompressTabProps) {
   const { state, run, reset } = useDecompressor();
+
+  // Propagate status changes to App.tsx for the Algorithm Steps panel
+  useEffect(() => {
+    onStatusChange?.(state.status);
+  }, [state.status, onStatusChange]);
 
   return (
     <div className="tab-content">
@@ -95,12 +114,13 @@ export function DecompressTab() {
               </button>
             </div>
 
-            {/* Stats */}
+            {/* Stats — pass treeSerializedBits so the secondary row renders */}
             <StatsPanel
               originalSize={state.result.compressedSize}
               outputSize={state.result.decompressedSize}
-              ratio={(state.result.compressedSize / state.result.decompressedSize) * 100}
+              ratio={(state.result.compressedSize / Math.max(state.result.decompressedSize, 1)) * 100}
               mode="decompress"
+              treeSerializedBits={state.result.headerInfo.treeSerializedBits}
             />
 
             {/* Header field breakdown */}

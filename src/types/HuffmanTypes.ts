@@ -41,6 +41,7 @@ export interface CompressResult {
   huffFileName: string;           // suggested download filename
   treeSerializedBits: number;     // how many bits the serialised tree occupies
   leafCount: number;              // number of unique byte values in the file
+  freqTable?: Map<number, number>; // byte value → frequency count (added by useCompressor for UI display)
 }
 
 // ── Decompression result ─────────────────────────────────────────────────────

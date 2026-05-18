@@ -48,7 +48,16 @@ export function useCompressor() {
         const arrayBuffer = reader.result as ArrayBuffer;
         const data = new Uint8Array(arrayBuffer);
         const result = compress(data, file.name);
-        setState({ status: 'done', result });
+
+        // Count byte frequencies so the UI can sort the encoding table by frequency
+        // and compute the weighted average code length. compress() does this internally
+        // but does not expose the freq array, so we compute it again here (O(n), cheap).
+        const freqTable = new Map<number, number>();
+        for (const byte of data) {
+          freqTable.set(byte, (freqTable.get(byte) ?? 0) + 1);
+        }
+
+        setState({ status: 'done', result: { ...result, freqTable } });
       } catch (err) {
         setState({ status: 'error', error: String(err) });
       }
