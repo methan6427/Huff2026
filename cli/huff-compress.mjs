@@ -202,6 +202,17 @@ if (inputPath.startsWith('file://')) {
 }
 log('resolved path: ' + inputPath);
 
+// Refuse to compress an already-compressed .huff file
+if (inputPath.toLowerCase().endsWith('.huff')) {
+  spawnSync('zenity', [
+    '--error',
+    '--title=Already Compressed',
+    '--text=This file is already a .huff file.\nHuffman compression cannot be applied again.',
+    '--width=320',
+  ], { env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' } });
+  process.exit(0);
+}
+
 const data      = new Uint8Array(readFileSync(inputPath));
 const fileName  = basename(inputPath);
 const defaultOut = join(dirname(inputPath), fileName + '.huff');

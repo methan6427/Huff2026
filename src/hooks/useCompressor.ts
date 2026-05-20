@@ -38,6 +38,11 @@ export function useCompressor() {
    * @param file - the File object from an <input type="file"> or drag-and-drop event
    */
   const run = useCallback((file: File) => {
+    if (file.name.toLowerCase().endsWith('.huff')) {
+      setState({ status: 'error', error: 'This file is already a .huff file. Huffman compression cannot be applied again.' });
+      return;
+    }
+
     setState({ status: 'processing' });
 
     // Use FileReader to read the file as a binary ArrayBuffer
