@@ -10,9 +10,13 @@
  * A zenity save-dialog asks where to write the .huff output each time.
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, appendFileSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { spawnSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const LOG = '/tmp/huff-compress.log';
+function log(msg) { appendFileSync(LOG, new Date().toISOString() + ' ' + msg + '\n'); }
 
 // ── HuffmanNode factories ────────────────────────────────────────────────────
 
@@ -183,11 +187,20 @@ function compress(data, fileName) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const inputPath = process.argv[2];
+let inputPath = process.argv[2];
+log('called with: ' + JSON.stringify(process.argv));
+log('DISPLAY=' + process.env.DISPLAY);
+
 if (!inputPath) {
   process.stderr.write('Usage: huff-compress.mjs <file>\n');
   process.exit(1);
 }
+
+// Nemo may pass a file:// URI — convert it to a plain path
+if (inputPath.startsWith('file://')) {
+  inputPath = fileURLToPath(inputPath);
+}
+log('resolved path: ' + inputPath);
 
 const data      = new Uint8Array(readFileSync(inputPath));
 const fileName  = basename(inputPath);
@@ -198,9 +211,10 @@ const dialog = spawnSync('zenity', [
   '--file-selection', '--save', '--confirm-overwrite',
   `--filename=${defaultOut}`,
   '--title=Save .huff file',
-], { encoding: 'utf-8' });
+], { encoding: 'utf-8', env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' } });
 
-if (dialog.status !== 0) process.exit(0); // cancelled
+log('zenity status: ' + dialog.status + ' stderr: ' + dialog.stderr);
+if (dialog.status !== 0) { log('cancelled or failed'); process.exit(0); }
 
 const outputPath = dialog.stdout.trim();
 if (!outputPath) process.exit(0);
