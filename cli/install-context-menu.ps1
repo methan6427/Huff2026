@@ -2,12 +2,6 @@
 <#
 .SYNOPSIS
     Adds "Compress with Huffman" to the Windows Explorer right-click menu for all files.
-
-.DESCRIPTION
-    Writes two registry keys under HKEY_CLASSES_ROOT\*\shell\HuffmanCompress so that
-    right-clicking any file in Explorer shows the option.
-    .huff files are rejected at runtime by huff-compress-windows.mjs.
-
 .NOTES
     Run once as Administrator.  To undo, run uninstall-context-menu.ps1.
 #>
@@ -16,7 +10,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # ── Locate node.exe ──────────────────────────────────────────────────────────
-$nodeExe = (Get-Command node -ErrorAction SilentlyContinue)?.Source
+$nodCmd  = Get-Command node -ErrorAction SilentlyContinue
+$nodeExe = if ($nodCmd) { $nodCmd.Source } else { $null }
 if (-not $nodeExe) {
     Write-Host "ERROR: node.exe not found in PATH. Install Node.js and try again." -ForegroundColor Red
     exit 1
@@ -24,34 +19,28 @@ if (-not $nodeExe) {
 Write-Host "Found node: $nodeExe"
 
 # ── Absolute path to the companion script ────────────────────────────────────
-$scriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$mjs        = Join-Path $scriptDir 'huff-compress-windows.mjs'
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$mjs       = Join-Path $scriptDir 'huff-compress-windows.mjs'
 if (-not (Test-Path $mjs)) {
     Write-Host "ERROR: huff-compress-windows.mjs not found at:`n  $mjs" -ForegroundColor Red
     exit 1
 }
 Write-Host "Found script: $mjs"
 
-# ── Registry paths ───────────────────────────────────────────────────────────
-$shellKey   = 'HKCR:\*\shell\HuffmanCompress'
-$commandKey = "$shellKey\command"
-
 # ── Build the command string ─────────────────────────────────────────────────
-# Explorer passes the file path as %1 (already quoted by the shell).
-# We add our own quotes around the script path to handle spaces in paths.
+# Quotes around each path so spaces are handled; %1 is the file Explorer passes in.
 $cmd = "`"$nodeExe`" `"$mjs`" `"%1`""
+Write-Host "Command: $cmd"
 
-# ── Write registry entries ───────────────────────────────────────────────────
-if (-not (Test-Path $shellKey)) {
-    New-Item -Path $shellKey -Force | Out-Null
-}
-Set-ItemProperty -Path $shellKey -Name '(Default)' -Value 'Compress with Huffman'
-Set-ItemProperty -Path $shellKey -Name 'Icon'      -Value 'shell32.dll,46'
+# ── Write registry via .NET (handles embedded quotes reliably) ────────────────
+$shellKey = [Microsoft.Win32.Registry]::ClassesRoot.CreateSubKey('*\shell\HuffmanCompress')
+$shellKey.SetValue('', 'Compress with Huffman')
+$shellKey.SetValue('Icon', 'shell32.dll,46')
+$shellKey.Close()
 
-if (-not (Test-Path $commandKey)) {
-    New-Item -Path $commandKey -Force | Out-Null
-}
-Set-ItemProperty -Path $commandKey -Name '(Default)' -Value $cmd
+$cmdKey = [Microsoft.Win32.Registry]::ClassesRoot.CreateSubKey('*\shell\HuffmanCompress\command')
+$cmdKey.SetValue('', $cmd)
+$cmdKey.Close()
 
 Write-Host ""
 Write-Host "Done! Right-click any file in Explorer and choose 'Compress with Huffman'." -ForegroundColor Green
