@@ -1,37 +1,17 @@
-/**
- * useDecompressor.ts
- *
- * React hook that wraps the decompression pipeline for use in components.
- * Mirrors useCompressor in structure: idle → processing → done | error.
- *
- * Part of: COM336 Project 2 — Huffman Coding
- */
-
+// React hook to handle decompression in the app.
 import { useState, useCallback } from 'react';
 import { decompress } from '../algorithms/decompress';
 import type { DecompressorState } from '../types/HuffmanTypes';
 
-/**
- * useDecompressor
- *
- * Returns the current decompression state plus a `run` callback.
- * Reading the .huff file uses the browser FileReader API (ArrayBuffer mode).
- *
- * @returns { state, run, reset }
- */
+// Manage decompression state and provide a function to decompress a file.
 export function useDecompressor() {
   const [state, setState] = useState<DecompressorState>({ status: 'idle' });
 
-  /**
-   * run
-   *
-   * Reads the .huff File as an ArrayBuffer and calls the decompression algorithm.
-   *
-   * @param file - a .huff File from the file picker
-   */
+  // Decompress a .huff file when the user picks one.
   const run = useCallback((file: File) => {
     setState({ status: 'processing' });
 
+    // Read the .huff file from the user's computer.
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -39,7 +19,7 @@ export function useDecompressor() {
         const arrayBuffer = reader.result as ArrayBuffer;
         const data = new Uint8Array(arrayBuffer);
         const result = decompress(data);
-        // Store the raw input bytes so RawHeaderViewer can display the actual header
+        // Save the file bytes for the header display.
         setState({ status: 'done', result, rawHuffBuffer: data });
       } catch (err) {
         setState({ status: 'error', error: String(err) });
@@ -53,11 +33,7 @@ export function useDecompressor() {
     reader.readAsArrayBuffer(file);
   }, []);
 
-  /**
-   * reset
-   *
-   * Returns the hook to the 'idle' state.
-   */
+  // Reset to start a new decompression.
   const reset = useCallback(() => {
     setState({ status: 'idle' });
   }, []);

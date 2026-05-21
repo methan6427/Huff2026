@@ -1,42 +1,13 @@
-/**
- * useCompressor.ts
- *
- * React hook that wraps the compression pipeline for use in components.
- * Manages async state (idle → processing → done | error) and exposes
- * a `run` function that accepts a File object from the browser's FileReader API.
- *
- * Part of: COM336 Project 2 — Huffman Coding
- */
-
+// React hook to handle compression in the app.
 import { useState, useCallback } from 'react';
 import { compress } from '../algorithms/compress';
 import type { CompressorState } from '../types/HuffmanTypes';
 
-/**
- * useCompressor
- *
- * Returns the current compression state plus a `run` callback.
- * Reading the file uses the browser's FileReader API (ArrayBuffer mode)
- * so the UI thread is not blocked by large files.
- *
- * Usage:
- *   const { state, run, reset } = useCompressor();
- *   run(file);  // triggers compression
- *
- * @returns { state, run, reset }
- */
+// Manage compression state and provide a function to compress a file.
 export function useCompressor() {
   const [state, setState] = useState<CompressorState>({ status: 'idle' });
 
-  /**
-   * run
-   *
-   * Reads the File as an ArrayBuffer, wraps it in Uint8Array, and calls the
-   * compression algorithm. Updates state to 'processing' before starting,
-   * then 'done' on success or 'error' on failure.
-   *
-   * @param file - the File object from an <input type="file"> or drag-and-drop event
-   */
+  // Compress a file when the user picks one.
   const run = useCallback((file: File) => {
     if (file.name.toLowerCase().endsWith('.huff')) {
       setState({ status: 'error', error: 'This file is already a .huff file. Huffman compression cannot be applied again.' });
@@ -45,7 +16,7 @@ export function useCompressor() {
 
     setState({ status: 'processing' });
 
-    // Use FileReader to read the file as a binary ArrayBuffer
+    // Read the file from the user's computer.
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -54,9 +25,7 @@ export function useCompressor() {
         const data = new Uint8Array(arrayBuffer);
         const result = compress(data, file.name);
 
-        // Count byte frequencies so the UI can sort the encoding table by frequency
-        // and compute the weighted average code length. compress() does this internally
-        // but does not expose the freq array, so we compute it again here (O(n), cheap).
+        // Count byte frequencies for the display.
         const freqTable = new Map<number, number>();
         for (const byte of data) {
           freqTable.set(byte, (freqTable.get(byte) ?? 0) + 1);
@@ -75,11 +44,7 @@ export function useCompressor() {
     reader.readAsArrayBuffer(file);
   }, []);
 
-  /**
-   * reset
-   *
-   * Returns the hook to the 'idle' state, clearing any previous result or error.
-   */
+  // Reset to start a new compression.
   const reset = useCallback(() => {
     setState({ status: 'idle' });
   }, []);

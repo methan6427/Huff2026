@@ -1,16 +1,10 @@
-/**
- * main.tsx
- *
- * Vite entry point. Mounts the React application into the #root div.
- *
- * Part of: COM336 Project 2 — Huffman Coding
- */
-
+// Start the React application in the root HTML element.
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 
+// Put the app on the page inside the div with id='root'.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

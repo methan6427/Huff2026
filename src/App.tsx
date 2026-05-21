@@ -1,13 +1,4 @@
-/**
- * App.tsx
- *
- * Root component. Provides two routes:
- *   /      → main interface with Compress / Decompress tabs
- *   /mini  → simplified drag-and-drop interface (file-explorer integration)
- *
- * Part of: COM336 Project 2 — Huffman Coding
- */
-
+// Main app with two pages: one for compress/decompress, one for drag-and-drop.
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CompressTab } from './components/CompressTab';
@@ -16,27 +7,24 @@ import { Mini } from './pages/Mini';
 
 type ActiveTab = 'compress' | 'decompress';
 
-/**
- * MainLayout
- *
- * The primary application shell with a header, tab bar, and tab content area.
- */
+// Show the header, tabs, and content in the main page.
 function MainLayout() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('compress');
 
   return (
     <div className="app-shell">
-      {/* ── Header ────────────────────────────────────────────────────── */}
+      {/* Top of page with title */}
       <header className="app-header">
         <div className="app-header-inner">
           <div className="app-title-group">
+            {/* Show the name "Huffman Coder" and the class information */}
             <h1 className="app-title">Huffman Coder</h1>
             <p className="app-subtitle">COM336 · Design &amp; Analysis of Algorithms · Birzeit University</p>
           </div>
         </div>
       </header>
 
-      {/* ── Tab Bar ───────────────────────────────────────────────────── */}
+      {/* Buttons to switch between Compress and Decompress */}
       <nav className="tab-bar">
         <button
           className={`tab-btn ${activeTab === 'compress' ? 'active' : ''}`}
@@ -52,12 +40,12 @@ function MainLayout() {
         </button>
       </nav>
 
-      {/* ── Content Area ──────────────────────────────────────────────── */}
+      {/* Show the selected tab (Compress or Decompress) */}
       <main className="app-main">
         {activeTab === 'compress' ? <CompressTab /> : <DecompressTab />}
       </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────── */}
+      {/* Bottom text */}
       <footer className="app-footer">
         Huffman Coding · COM336 Project 2 · Birzeit University
       </footer>
@@ -65,11 +53,7 @@ function MainLayout() {
   );
 }
 
-/**
- * App
- *
- * Top-level router. Delegates to MainLayout or Mini based on the URL path.
- */
+// Choose which page to show based on the URL path.
 export default function App() {
   return (
     <BrowserRouter>

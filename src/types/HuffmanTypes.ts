@@ -1,77 +1,44 @@
-/**
- * HuffmanTypes.ts
- *
- * Shared TypeScript interfaces and types for the Huffman coding project.
- * Centralises all type definitions so every module imports from one place.
- *
- * Part of: COM336 Project 2 — Huffman Coding
- */
+// All type definitions for the Huffman coding project.
 
-// ── Tree node ────────────────────────────────────────────────────────────────
-
-/**
- * HuffmanNode
- *
- * Represents a single node in the Huffman binary tree.
- * Leaf nodes store an actual byte value (0–255) in `char`.
- * Internal nodes have char = null and two non-null children.
- */
+// A node in the Huffman tree (leaf or branch).
 export interface HuffmanNode {
-  char: number | null; // byte value for leaves; null for internal nodes
-  freq: number;        // frequency count used when building the tree
+  char: number | null; // The byte value for a leaf; null for a branch.
+  freq: number;        // How many times this byte appears in the file.
   left: HuffmanNode | null;
   right: HuffmanNode | null;
 }
 
-// ── Compression result ───────────────────────────────────────────────────────
-
-/**
- * CompressResult
- *
- * Everything produced by the compression pipeline:
- * the output buffer, the code table, and statistics.
- */
+// Results from compression - the compressed file and information about it.
 export interface CompressResult {
-  buffer: Uint8Array;             // the final .huff file bytes
-  codeTable: Map<number, string>; // byte value → binary code string (e.g. "1010")
-  originalSize: number;           // input file size in bytes
-  compressedSize: number;         // output .huff file size in bytes
-  compressionRatio: number;       // compressedSize / originalSize * 100 (percentage)
-  extension: string;              // original file extension (e.g. "txt")
-  huffFileName: string;           // suggested download filename
-  treeSerializedBits: number;     // how many bits the serialised tree occupies
-  leafCount: number;              // number of unique byte values in the file
-  freqTable?: Map<number, number>; // byte value → frequency count (added by useCompressor for UI display)
+  buffer: Uint8Array;             // The compressed file bytes.
+  codeTable: Map<number, string>; // Each byte value gets a binary code.
+  originalSize: number;           // Original file size in bytes.
+  compressedSize: number;         // Compressed file size in bytes.
+  compressionRatio: number;       // How much smaller the compressed file is (percentage).
+  extension: string;              // File type (like .txt or .jpg).
+  huffFileName: string;           // Name for download.
+  treeSerializedBits: number;     // How many bits the tree uses.
+  leafCount: number;              // How many different bytes are in the file.
+  freqTable?: Map<number, number>; // How many times each byte appears.
 }
 
-// ── Decompression result ─────────────────────────────────────────────────────
-
-/**
- * DecompressResult
- *
- * Everything produced by the decompression pipeline.
- */
+// Results from decompression - the original file recovered from a .huff file.
 export interface DecompressResult {
-  buffer: Uint8Array;       // the reconstructed original file bytes
-  originalExtension: string; // extension recovered from the header
-  compressedSize: number;   // size of the .huff input in bytes
-  decompressedSize: number; // size of the recovered file in bytes
-  headerInfo: HeaderInfo;   // parsed header fields for display
+  buffer: Uint8Array;       // The recovered original file bytes.
+  originalExtension: string; // The file type from the .huff header.
+  compressedSize: number;   // Size of the .huff file.
+  decompressedSize: number; // Size of the recovered file.
+  headerInfo: HeaderInfo;   // Information from the .huff header.
 }
 
-/**
- * HeaderInfo
- *
- * The parsed header fields from a .huff file, shown in the HeaderDisplay component.
- */
+// Information stored in the .huff file header.
 export interface HeaderInfo {
-  extension: string;          // original file extension
-  originalFileSize: number;   // original file size stored in header (32-bit field)
-  treeSerializedBits: number; // bit count of the serialised tree (32-bit field)
+  extension: string;          // Original file type.
+  originalFileSize: number;   // Original file size.
+  treeSerializedBits: number; // Bits used for the Huffman tree.
 }
 
-// ── Hook state types ─────────────────────────────────────────────────────────
-
+// States during compression or decompression.
 export type ProcessStatus = 'idle' | 'processing' | 'done' | 'error';
 
 export interface CompressorState {
